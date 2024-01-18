@@ -3,9 +3,11 @@ using namespace std;
 
 #define rand RAND
 #define Z 16
-int cnt[471], cur, cnt2[471];
+int cnt[471], cur, cnt2[471], tot, ll[471];
 char buf[471], buf2[471], buf3[471], buf4[471], SS[471] = "KQEECCSSGGNNRRBB", S[2][11] = {"KQECSGNRBP", "kqecsgnrbp"};
 mt19937 rand(chrono::system_clock::now().time_since_epoch().count());
+
+#define hint(...) sprintf(buf, __VA_ARGS__); printf("---------------------------------------\n%s", buf)
 
 void show();
 void doopt(int);
@@ -15,13 +17,6 @@ void domove(int);
 void doup(int);
 void doyes(int);
 
-void simplehint(const char *S) {
-	printf("---------------------------------------\n%s", S);
-}
-
-#define hint(...) sprintf(buf, __VA_ARGS__); simplehint(buf)
-
-int tot;
 class piece {
 protected:
 	int z, x, y, id, removed;
@@ -49,6 +44,7 @@ public:
 	virtual void askpromote(int flag) {
 		hint("%spromote? [Y]es/[N]o: ", flag == 0 ? "" : "bad option. ");
 		fgets(buf, 471, stdin);
+		buf2[0] = 0;
 		sscanf(buf, "%1s", buf2);
 		buf2[0] = toupper(buf2[0]);
 		if (buf2[0] != 'Y' && buf2[0] != 'N') {
@@ -76,6 +72,7 @@ void piece::askmove(int flag) {
 	hint("%sinput final location: ", flag == 0 ? "" : flag == 1 ? "bad format. " : flag == 2 ? "location cannot be targetted by you. " : "location cannot be targetted by the piece. ");
 	fgets(buf, 471, stdin);
 	int tx, ty;
+	buf2[0] = 0;
 	sscanf(buf, "%1s%d", buf2, &ty);
 	buf2[0] = toupper(buf2[0]);
 	if (buf2[0] == 'X') {
@@ -111,13 +108,13 @@ void piece::domove(int Y, int X) {
 
 void piece::doremove(piece *src, int recycle) {
 	if (t == '-') {
-		cnt[z ? 'P' : 'p']--;
+		cnt2[z ? 'P' : 'p']--;
 	} else {
-		cnt[getS()]--;
+		cnt2[getS()]--;
 	}
 	if (recycle) {
 		if (t == '-') {
-			cnt2[z ? 'p' : 'P']++;
+			cnt[z ? 'p' : 'P']++;
 		} else {
 			cnt[getS() ^ 'a' ^ 'A']++;
 		}
@@ -153,6 +150,7 @@ public:
 	virtual void askpromote(int flag) {
 		hint("%spromote to what? e[X]it/[B]ishop/[C]annon/[E]xplosive/[G]old/k[N]ight/[O]bstacle/[Q]ueen/[R]ook/[S]ilver: ", flag == 0 ? "" : "bad piece. ");
 		fgets(buf, 471, stdin);
+		buf2[0] = 0;
 		sscanf(buf, "%1s", buf2);
 		buf2[0] = toupper(buf2[0]);
 		if (buf2[0] == 'X') {
@@ -380,7 +378,7 @@ public:
 	}
 	virtual int badmove(int ty, int tx) {
 		int dy = ty - y, dx = tx - x;
-		return !dy && !dx || abs(dy) > 2 || abs(dx) > 2;
+		return ll[cur] == 1 || !dy && !dx || abs(dy) > 2 || abs(dx) > 2;
 	}
 	virtual void askmove(int flag) {
 		if (flag) {
@@ -389,6 +387,10 @@ public:
 			piece::askmove(0);
 			piece::askmove(0);
 		}
+	}
+	virtual void domove(int Y, int X) {
+		piece::domove(Y, X);
+		ll[cur] = 0;
 	}
 	virtual void askpromote(int flag) {
 		t = '.';
@@ -455,7 +457,7 @@ void init() {
 	}
 	// TODO: when Z!=16
 	for (auto y : {6, 11}) {
-		for (auto x : {3, 7, 10, 14}) {
+		for (auto x : {4, 5, 12, 13}) {
 			a[y][x] = getpiece(y, x, '@');
 		}
 	}
@@ -542,6 +544,7 @@ void domove(int flag) {
 	hint("%sinput initial location: ", flag == 0 ? "" : flag == 1 ? "bad format. " : flag == 2 ? "piece cannot be moved by you. " : "piece cannot be moved currently. ");
 	fgets(buf, 471, stdin);
 	int sy, sx;
+	buf2[0] = 0;
 	sscanf(buf, "%1s%d", buf2, &sy);
 	buf2[0] = toupper(buf2[0]);
 	if (buf2[0] == 'X') {
@@ -570,6 +573,7 @@ void doplace2(int flag, int up) {
 	hint("%sinput location: ", flag == 0 ? "" : flag == 1 ? "bad format. " : "bad location. ");
 	fgets(buf, 471, stdin);
 	int sx, sy;
+	buf2[0] = 0;
 	sscanf(buf, "%1s%d", buf2, &sy);
 	buf2[0] = toupper(buf2[0]);
 	if (buf2[0] == 'X') {
@@ -589,14 +593,15 @@ void doplace2(int flag, int up) {
 }
 
 void doplace1(int flag) {
-	hint("%sdrop what? e[Z]it/[B]ishop/[C]annon/[E]xplosive/[G]old/[K]ing/k[N]ight/[O]bstacle/[P]awn/[Q]ueen/[R]ook/[S]ilver: ", flag == 0 ? "" : flag == 1 ? "bad piece. " : "bad drop. ");
+	hint("%sdrop what? e[X]it/[B]ishop/[C]annon/[E]xplosive/[G]old/[K]ing/k[N]ight/[O]bstacle/[P]awn/[Q]ueen/[R]ook/[S]ilver: ", flag == 0 ? "" : flag == 1 ? "bad piece. " : "bad drop. ");
 	fgets(buf, 471, stdin);
-	sscanf(buf, "%s", buf2);
+	buf2[0] = 0;
+	sscanf(buf, "%1s", buf2);
 	buf2[0] = toupper(buf2[0]);
 	if (buf2[0] == 'X') {
 		return doopt(0);
 	}
-	if (buf2[0] != 'B' && buf2[0] != 'C' && buf2[0] != 'E' && buf2[0] != 'G' && buf2[0] != 'K' && buf2[0] != 'N' && buf2[0] != 'O' && buf2[0] != 'P' && buf2[0] != 'Q' && buf2[0] != 'R' && buf2[0] != 'S' || buf2[1]) {
+	if (buf2[0] != 'B' && buf2[0] != 'C' && buf2[0] != 'E' && buf2[0] != 'G' && buf2[0] != 'K' && buf2[0] != 'N' && buf2[0] != 'O' && buf2[0] != 'P' && buf2[0] != 'Q' && buf2[0] != 'R' && buf2[0] != 'S') {
 		return doplace1(1);
 	}
 	int up = cur ? tolower(buf2[0]) : buf2[0];
@@ -609,6 +614,7 @@ void doplace1(int flag) {
 void doopt(int flag) {
 	hint("%s%s moves. choose option. [P]lace/[M]ove: ", flag == 0 ? "" : flag == 1 ? "bad format. " : "bad move. ", cur ? "black" : "white");
 	fgets(buf, 471, stdin);
+	buf2[0] = 0;
 	sscanf(buf, "%s", buf2);
 	buf2[0] = toupper(buf2[0]);
 	if (buf2[0] != 'P' && buf2[0] != 'M' || buf2[1]) {
@@ -626,6 +632,7 @@ int main() {
 	while (true) {
 		show();
 		doopt(0);
+		ll[cur]++;
 		cur ^= 1;
 	}
 }
